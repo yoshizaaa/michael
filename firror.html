@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Mobile Camera</title>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+            width: 100%;
+            overflow: hidden;
+            background: black;
+        }
+        #video {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: scaleX(-1); /* Mirror effect for front camera */
+        }
+        #textBubble {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: rgba(255,255,255,0.8);
+            border: 2px solid #333;
+            border-radius: 20px;
+            padding: 10px 20px;
+            font-size: 18px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            z-index: 10;
+            max-width: 90%;
+            user-select: none;
+        }
+        #errorMessage {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            text-align: center;
+            z-index: 20;
+        }
+    </style>
+</head>
+<body>
+    <div id="textBubble"></div>
+    <div id="errorMessage"></div>
+    <video id="video" autoplay playsinline></video>
+
+    <script>
+        const texts = [
+            "Your face is ridiculas",
+            "look at you....pathetic",
+            "your an ugly motherfucker",
+            "you look like ass",
+            "lol what a loser",
+            "clapped"
+        ];
+
+        const videoElement = document.getElementById('video');
+        const textBubble = document.getElementById('textBubble');
+        const errorMessage = document.getElementById('errorMessage');
+
+        // Prevent default touch behaviors
+        document.addEventListener('touchmove', (e) => e.preventDefault(), { passive: false });
+        document.addEventListener('touchstart', (e) => e.preventDefault(), { passive: false });
+
+        // Function to set random text
+        function setRandomText() {
+            const randomText = texts[Math.floor(Math.random() * texts.length)];
+            textBubble.textContent = randomText;
+        }
+
+        // Start video capture
+        async function startCamera() {
+            // Prefer front camera if available
+            const constraints = {
+                video: { 
+                    facingMode: { ideal: "user" },
+                    width: { ideal: window.innerWidth },
+                    height: { ideal: window.innerHeight }
+                }
+            };
+
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                
+                videoElement.srcObject = stream;
+                videoElement.addEventListener('loadedmetadata', () => {
+                    videoElement.play();
+                });
+
+                // Set initial random text
+                setRandomText();
+            } catch (error) {
+                console.error('Error accessing camera:', error);
+                errorMessage.innerHTML = `
+                    Camera access denied 📷❌<br>
+                    Please check permissions and try again
+                `;
+            }
+        }
+
+        // Prevent screen sleep and rotation
+        function preventSleep() {
+            try {
+                if (navigator.wakeLock) {
+                    navigator.wakeLock.request('screen');
+                }
+            } catch (err) {
+                console.error('Wake lock failed:', err);
+            }
+        }
+
+        // Call functions when page loads
+        document.addEventListener('DOMContentLoaded', () => {
+            startCamera();
+            preventSleep();
+        });
+
+        // Refresh text on page reload
+        window.addEventListener('load', setRandomText);
+
+        // Disable zooming
+        document.addEventListener('gesturestart', (e) => e.preventDefault());
+        document.addEventListener('gesturechange', (e) => e.preventDefault());
+        document.addEventListener('gestureend', (e) => e.preventDefault());
+    </script>
+</body>
+</html>
